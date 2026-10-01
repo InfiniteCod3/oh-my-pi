@@ -103,7 +103,7 @@ describe("createAgentSession defaultInactive tool activation", () => {
 		agentDir: tempDir,
 		modelRegistry,
 		sessionManager: SessionManager.inMemory(),
-		settings: Settings.isolated(),
+		settings: Settings.isolated({ "tools.profile": "full" }),
 		model: getBundledModel("openai", "gpt-4o-mini"),
 		disableExtensionDiscovery: true,
 		skills: [],
@@ -2048,6 +2048,7 @@ describe("createAgentSession defaultInactive tool activation", () => {
 		const normalDir = makeTempDir();
 		const configuredSettings = () =>
 			Settings.isolated({
+				"tools.profile": "full",
 				modelRoles: { image: "openai/gpt-image-1" },
 				"generate_image.enabled": true,
 				"speechgen.enabled": true,
