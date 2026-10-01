@@ -20,7 +20,7 @@ function restoreEnv(name: "PI_PY" | "PI_JS", value: string | undefined): void {
 	}
 	Bun.env[name] = value;
 }
-function makeSession(settings = Settings.isolated()): ToolSession {
+function makeSession(settings = Settings.isolated({ "tools.profile": "full" })): ToolSession {
 	return {
 		cwd: "/tmp/eval-test",
 		hasUI: false,
@@ -88,7 +88,7 @@ describe("EvalTool language dispatch", () => {
 	});
 
 	it("bounds backend probing by the effective global eval timeout", async () => {
-		const settings = Settings.isolated();
+		const settings = Settings.isolated({ "tools.profile": "full" });
 		cfgToolsMaxTimeout.set(settings, 1);
 		const probeSpy = vi.spyOn(evalIndex.pythonBackend, "isAvailable").mockResolvedValue(false);
 
@@ -101,7 +101,7 @@ describe("EvalTool language dispatch", () => {
 	});
 
 	it("preserves caller cancellation during py availability probing", async () => {
-		const settings = Settings.isolated();
+		const settings = Settings.isolated({ "tools.profile": "full" });
 		const controller = new AbortController();
 		vi.spyOn(evalIndex.pythonBackend, "isAvailable").mockImplementation(async () => {
 			controller.abort();
@@ -129,7 +129,7 @@ describe("EvalTool language dispatch", () => {
 	});
 
 	it("rejects py cells when eval.py is disabled", async () => {
-		const settings = Settings.isolated();
+		const settings = Settings.isolated({ "tools.profile": "full" });
 		cfgEvalPy.set(settings, false);
 		const tool = new EvalTool(makeSession(settings));
 		await expect(
@@ -141,7 +141,7 @@ describe("EvalTool language dispatch", () => {
 	});
 
 	it("rejects js cells when eval.js is disabled", async () => {
-		const settings = Settings.isolated();
+		const settings = Settings.isolated({ "tools.profile": "full" });
 		cfgEvalJs.set(settings, false);
 		const tool = new EvalTool(makeSession(settings));
 		await expect(
@@ -154,7 +154,7 @@ describe("EvalTool language dispatch", () => {
 
 	it("uses settings for eval backends whose env flag is unset", () => {
 		Bun.env.PI_PY = "1";
-		const settings = Settings.isolated();
+		const settings = Settings.isolated({ "tools.profile": "full" });
 		cfgEvalPy.set(settings, false);
 		cfgEvalJs.set(settings, false);
 
@@ -166,7 +166,7 @@ describe("EvalTool language dispatch", () => {
 
 	it("lets PI_JS disable js execution even when eval.js is enabled", async () => {
 		Bun.env.PI_JS = "0";
-		const settings = Settings.isolated();
+		const settings = Settings.isolated({ "tools.profile": "full" });
 		cfgEvalJs.set(settings, true);
 		const tool = new EvalTool(makeSession(settings));
 

@@ -19,7 +19,7 @@ function makeSession(opts: {
 	maxRecursionDepth?: number;
 	readActive?: boolean;
 }): ToolSession {
-	const settings = Settings.isolated(opts.backends);
+	const settings = Settings.isolated({ "tools.profile": "full", ...opts.backends });
 	if (opts.maxRecursionDepth !== undefined) cfgTaskMaxRecursionDepth.set(settings, opts.maxRecursionDepth);
 	return {
 		cwd: "/tmp/eval-test",

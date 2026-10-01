@@ -10,7 +10,7 @@ function makeSession(): ToolSession {
 		hasUI: false,
 		getSessionFile: () => null,
 		getSessionSpawns: () => null,
-		settings: Settings.isolated(),
+		settings: Settings.isolated({ "tools.profile": "full" }),
 	} as unknown as ToolSession;
 }
 

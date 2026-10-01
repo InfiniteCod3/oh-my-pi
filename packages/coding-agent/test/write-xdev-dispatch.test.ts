@@ -52,7 +52,7 @@ function xdevSession(cwd: string, overrides: Partial<ToolSession> = {}): ToolSes
 		hasUI: true,
 		getSessionFile: () => null,
 		getSessionSpawns: () => "*",
-		settings: Settings.isolated({}),
+		settings: Settings.isolated({ "tools.profile": "full" }),
 		...overrides,
 	};
 }

@@ -64,7 +64,12 @@ describe("browser open during first-use Chromium download", () => {
 				hasUI: false,
 				getSessionFile: () => null,
 				getSessionSpawns: () => null,
-				settings: Settings.isolated({ "async.enabled": false, "browser.cmux": false, "browser.tern": false }),
+				settings: Settings.isolated({
+					"tools.profile": "full",
+					"async.enabled": false,
+					"browser.cmux": false,
+					"browser.tern": false,
+				}),
 				getEvalSessionId: () => "browser-download-regression",
 				getEvalPreludes: () => [prelude],
 			};
