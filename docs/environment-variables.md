@@ -418,8 +418,9 @@ Small typed decisions the app makes about its own state (the `auto` thinking-lev
 
 | Variable               | Default / behavior                                                                                  |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `PI_PY`                | Boolean flag override for Python; unset or empty defers to `eval.py` (default enabled)              |
-| `PI_JS`                | Boolean flag override for JavaScript; unset or empty defers to `eval.js` (default enabled)          |
+| `PI_PY`                | Boolean flag override for Python; unset or empty defers to `eval.py` (default enabled; disabled under the lean tool profile) |
+| `PI_JS`                | Boolean flag override for JavaScript; unset or empty defers to `eval.js` (default enabled; disabled under the lean tool profile) |
+| `PI_TOOLS_PROFILE`     | `lean` or `full`; overrides `tools.profile`. Lean turns off eval, LSP, debug, AST edit, semantic find, and Auto QA unless configured |
 | `PI_PYTHON_SKIP_CHECK` | Truthy flag skips Python interpreter availability checks (subprocess runner still starts on demand) |
 | `PI_PYTHON_IPC_TRACE`  | Truthy flag logs NDJSON frames exchanged with the Python runner subprocess                          |
 | `VIRTUAL_ENV`          | Highest-priority venv path for Python runtime resolution                                            |

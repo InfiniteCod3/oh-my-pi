@@ -13,6 +13,7 @@ import { removeSyncWithRetries, Snowflake } from "@oh-my-pi/pi-utils";
 
 import { cfgBashEnabled } from "@oh-my-pi/pi-coding-agent/exec/settings";
 import { cfgGithubEnabled, cfgGrepEnabled } from "@oh-my-pi/pi-coding-agent/tools/settings";
+import { cfgToolsProfile } from "@oh-my-pi/pi-coding-agent/tools/profile-settings";
 
 // Tool-gating settings (`grep.enabled`, `*.enabled`, ...) must reconcile a live
 // session's tools and prompt instead of waiting for the next session.
@@ -86,6 +87,32 @@ describe("settings-gated tools in a live session", () => {
 		await settle(session);
 		expect(session.getActiveToolNames()).toContain("grep");
 		expect(session.systemPrompt.join("\n")).toContain(GREP_POLICY);
+	});
+
+	it("lean profile drops the default-on extras and trims the prompt until switched to full", async () => {
+		const settings = Settings.isolated({});
+		const session = await startSession(settings);
+		const lean = session.getActiveToolNames();
+		for (const name of ["read", "bash", "edit", "write", "grep", "glob", "task", "wait"]) {
+			expect(lean).toContain(name);
+		}
+		expect(lean).not.toContain("eval");
+		expect(session.getMountedXdevToolNames()).not.toContain("debug");
+		expect(session.getMountedXdevToolNames()).not.toContain("ast_edit");
+		expect(session.systemPrompt.join("\n")).not.toContain("<completeness>");
+
+		cfgToolsProfile.set(settings, "full");
+		await settle(session);
+		expect(session.getActiveToolNames()).toContain("eval");
+		expect(session.getMountedXdevToolNames()).toEqual(expect.arrayContaining(["debug", "ast_edit"]));
+		expect(session.systemPrompt.join("\n")).toContain("<completeness>");
+	});
+
+	it("lean profile keeps extras the user configured explicitly", async () => {
+		const session = await startSession(Settings.isolated({ "eval.js": true, "astEdit.enabled": true }));
+		expect(session.getActiveToolNames()).toContain("eval");
+		expect(session.getMountedXdevToolNames()).toContain("ast_edit");
+		expect(session.getMountedXdevToolNames()).not.toContain("debug");
 	});
 
 	it("never widens an explicit tool list", async () => {

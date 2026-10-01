@@ -6,6 +6,7 @@ import { cfgEvalJs, cfgEvalPy } from "../eval/settings";
 import { cfgIdaAvailable } from "../ida/install";
 import { cfgLspEnabled } from "../lsp/settings";
 import { cfgTaskMaxRecursionDepth } from "../task/settings";
+import { leanDefault } from "./profile-settings";
 
 const EMPTY_STRING_ARRAY: string[] = [];
 
@@ -488,6 +489,7 @@ export const cfgAstEditEnabled = register({
 	id: "astEdit.enabled",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	ui: {
 		tab: "tools",
 		group: "Available Tools",
@@ -501,6 +503,7 @@ export const cfgFindEnabled = register({
 	type: "enum",
 	values: ["auto", "on", "off"] as const,
 	default: "auto",
+	defaultWhen: leanDefault("off"),
 	ui: {
 		tab: "tools",
 		group: "Available Tools",
@@ -525,6 +528,7 @@ export const cfgDebugEnabled = register({
 	id: "debug.enabled",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	ui: {
 		tab: "tools",
 		group: "Available Tools",
@@ -928,6 +932,7 @@ export const cfgDevAutoqa = register({
 	id: "dev.autoqa",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	env: "PI_AUTO_QA",
 	ui: {
 		tab: "tools",

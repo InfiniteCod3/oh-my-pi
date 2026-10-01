@@ -85,6 +85,16 @@ export type SettingEnv<T> =
 /** Protocol host that re-applies a setting's default instead of the user's persisted preference. */
 export type ProtocolHost = "rpc" | "acp";
 
+/**
+ * Alternate default: while `when` reads true and neither the environment nor any settings layer
+ * configures the setting, it reads `value` instead of its declared default (e.g. the lean tool
+ * profile turning default-on extras off). An explicit value always wins.
+ */
+export interface ConditionalDefault<T> {
+	readonly when: Derived<boolean>;
+	readonly value: T;
+}
+
 interface DefinitionBase {
 	/** Dotted setting path as written in config files, e.g. `"lsp.diagnosticsOnWrite"`. */
 	id: string;
@@ -120,6 +130,7 @@ interface DefinitionBase {
 export interface BooleanDefinition extends DefinitionBase {
 	type: "boolean";
 	default: boolean | undefined;
+	defaultWhen?: ConditionalDefault<boolean>;
 	env?: SettingEnv<boolean>;
 	ui?: UiBoolean;
 }
@@ -142,6 +153,7 @@ export interface EnumDefinition<T extends readonly string[] = readonly string[]>
 	type: "enum";
 	values: T;
 	default: T[number];
+	defaultWhen?: ConditionalDefault<T[number]>;
 	env?: SettingEnv<T[number]>;
 	ui?: UiEnum<T>;
 }
@@ -458,6 +470,7 @@ export class Setting<T, Id extends string = string> extends Derived<T> {
 	readonly segments: readonly string[];
 	readonly definition: SettingDefinition;
 	readonly #sources: readonly AnySetting[];
+	readonly #defaultWhen: ConditionalDefault<unknown> | undefined;
 	/** Environment variable supplying this value, if declared (see {@link SettingEnv}). */
 	readonly envName: string | undefined;
 	/** How {@link envName} yields to configured layers: `false` = it overrides them (see {@link SettingEnv}). */
@@ -472,7 +485,9 @@ export class Setting<T, Id extends string = string> extends Derived<T> {
 		this.id = definition.id;
 		this.segments = definition.id.split(".");
 		this.definition = definition;
-		this.#sources = [this];
+		this.#defaultWhen = "defaultWhen" in definition ? definition.defaultWhen : undefined;
+		// Listeners subscribe per source slot, so the condition's settings must notify this one too.
+		this.#sources = this.#defaultWhen ? [this, ...this.#defaultWhen.when.sources] : [this];
 		const env = definition.env;
 		this.envName = typeof env === "string" ? env : env?.name;
 		this.#parseEnv =
@@ -488,6 +503,12 @@ export class Setting<T, Id extends string = string> extends Derived<T> {
 	get default(): T {
 		const value = this.definition.default;
 		return (typeof value === "object" && value !== null ? structuredClone(value) : value) as T;
+	}
+
+	/** Default in effect in `scope`: the {@link ConditionalDefault} value while its condition holds. */
+	defaultIn(scope: ScopeLike): T {
+		const defaultWhen = this.#defaultWhen;
+		return defaultWhen?.when.get(scope) ? (defaultWhen.value as T) : this.default;
 	}
 
 	/** Declared value kind. */
@@ -632,22 +653,24 @@ export class Setting<T, Id extends string = string> extends Derived<T> {
 	}
 
 	inputs(settings: Settings): readonly unknown[] {
-		return [settings.rawValue(this)];
+		const raw = settings.rawValue(this);
+		return this.#defaultWhen ? [raw, this.#defaultWhen.when.get(settings)] : [raw];
 	}
 
 	compute(inputs: readonly unknown[], settings: Settings): T {
 		const raw = inputs[0];
+		const fallback = inputs[1] === true ? (this.#defaultWhen?.value as T) : this.default;
 		if (raw === undefined || this.accepts(raw)) {
 			// A fixed value re-arms this instance's warning, so breaking it again is reported again.
 			settings.warnState.invalid.delete(this.id);
-			return raw === undefined ? this.default : (raw as T);
+			return raw === undefined ? fallback : (raw as T);
 		}
 		const warned = settings.warnState.invalid;
 		if (!warned.has(this.id) || !Bun.deepEquals(warned.get(this.id), raw)) {
 			warned.set(this.id, raw);
 			logger.warn("Settings: ignoring invalid value, using the default", { setting: this.id, value: raw });
 		}
-		return this.default;
+		return fallback;
 	}
 
 	/**
@@ -814,6 +837,18 @@ const ordered: AnySetting[] = [];
 export function register<const D extends SettingDefinition>(definition: D): Setting<DefinitionValue<D>, D["id"]> {
 	if (byId.has(definition.id)) throw new Error(`Setting "${definition.id}" is registered twice`);
 	const handle = new Setting<DefinitionValue<D>, D["id"]>(definition);
+	if ("defaultWhen" in definition && definition.defaultWhen) {
+		const { when, value } = definition.defaultWhen;
+		if (!handle.accepts(value)) {
+			throw new Error(`Setting "${definition.id}" has an invalid conditional default: ${Bun.inspect(value)}`);
+		}
+		// One level only: a condition reading another conditional default (or this one) could cycle.
+		for (const source of when.sources) {
+			if ("defaultWhen" in source.definition && source.definition.defaultWhen) {
+				throw new Error(`Setting "${definition.id}" conditions its default on conditional "${source.id}"`);
+			}
+		}
+	}
 	byId.set(definition.id, handle as AnySetting);
 	ordered.push(handle as AnySetting);
 	return handle;

@@ -274,6 +274,7 @@ import { isIrcEnabled } from "./irc/messaging";
 import { imageGenTool } from "./tools/image-gen";
 import { wrapToolWithMetaNotice } from "./tools/output-meta";
 import { isFilesystemSourcePath } from "./tools/path-utils";
+import { cfgLeanTools } from "./tools/profile-settings";
 import { isAutoQaEnabled } from "./tools/report-tool-issue";
 import { queueResolveHandler } from "./tools/resolve";
 import { USER_TODO_EDIT_CUSTOM_TYPE } from "./tools/todo";
@@ -3840,6 +3841,7 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
 				delegationBias: sessionDelegationBias(toolSession),
 				taskIrcEnabled: !restrictToolNames && isIrcEnabled(settings, options.taskDepth ?? 0),
 				autoQaEnabled: !restrictToolNames && isAutoQaEnabled(settings),
+				leanPrompt: cfgLeanTools.get(settings),
 				writeTransportOnly:
 					toolSession.deviceOnlyWrite === true && toolSession.pendingFullWriteDescription !== true,
 				secretsEnabled: obfuscator?.obfuscates() === true,

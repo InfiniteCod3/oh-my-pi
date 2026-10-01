@@ -19,6 +19,8 @@ import { cfgTaskMaxConcurrency } from "@oh-my-pi/pi-coding-agent/task/settings";
 import { cfgEvalPy } from "@oh-my-pi/pi-coding-agent/eval/settings";
 import { cfgModelRoles } from "@oh-my-pi/pi-coding-agent/config/model-settings";
 import { cfgSearxngBasicPassword, cfgSearxngEndpoint } from "@oh-my-pi/pi-coding-agent/web/settings";
+import { cfgFindEnabled } from "@oh-my-pi/pi-coding-agent/tools/settings";
+import { cfgToolsProfile } from "@oh-my-pi/pi-coding-agent/tools/profile-settings";
 
 const tick = () => Promise.resolve();
 
@@ -203,6 +205,25 @@ describe("settings registry", () => {
 			"temperature=0.7",
 			"topP=0.33",
 		]);
+	});
+
+	it("applies a lean conditional default only while unconfigured, following the profile through overlays", async () => {
+		const parent = Settings.isolated({ "tools.profile": "full" });
+		const child = parent.overlay();
+		const pinned = parent.overlay({ "find.enabled": "on" });
+		expect(cfgFindEnabled.get(child)).toBe("auto");
+
+		const seen: string[] = [];
+		cfgFindEnabled.listen(child, value => {
+			seen.push(value);
+		});
+		cfgToolsProfile.override(parent, "lean");
+		await tick();
+		expect(cfgFindEnabled.get(child)).toBe("off");
+		expect(cfgFindEnabled.defaultIn(child)).toBe("off");
+		expect(seen).toEqual(["off"]);
+		expect(cfgFindEnabled.get(pinned)).toBe("on");
+		expect(cfgFindEnabled.isConfigured(child)).toBe(false);
 	});
 
 	it("treats a reordered record as a change, since record order carries precedence", async () => {

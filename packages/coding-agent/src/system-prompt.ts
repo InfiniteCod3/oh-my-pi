@@ -49,6 +49,7 @@ import {
 	cfgPersonality,
 } from "./session/settings";
 import { cfgTaskBatch, cfgTaskEager } from "./task/settings";
+import { cfgLeanTools } from "./tools/profile-settings";
 import {
 	cfgAsyncEnabled,
 	cfgToolsIntentTracing,
@@ -75,6 +76,7 @@ export const cfgSystemPromptInputs = combine({
 	vaultEnabled: cfgVaultEnabled,
 	renderMermaid: cfgTuiRenderMermaid,
 	reactions: cfgTuiReactions,
+	leanPrompt: cfgLeanTools,
 	// Rendered into the bash/eval/task tool descriptions (inline catalog) or read by
 	// the prompt builder (eager/batch delegation).
 	asyncEnabled: cfgAsyncEnabled,
@@ -585,6 +587,8 @@ export interface BuildSystemPromptOptions {
 	xdevDocs?: string;
 	/** Whether Auto-QA grievance reporting is enabled; renders the `xd://report_issue` note. */
 	autoQaEnabled?: boolean;
+	/** Lean tool profile: omit the testing-philosophy, cleanup, and delivery-contract rules. Default: false */
+	leanPrompt?: boolean;
 	/** Whether active `write` is restricted to xd:// dispatch and the plan artifact sandbox. */
 	writeTransportOnly?: boolean;
 }
@@ -668,6 +672,7 @@ export async function buildSystemPrompt(options: BuildSystemPromptOptions = {}):
 		xdevTools = [],
 		xdevDocs = "",
 		autoQaEnabled = false,
+		leanPrompt = false,
 		writeTransportOnly = false,
 		activeRepoContext: providedActiveRepoContext,
 	} = options;
@@ -996,6 +1001,7 @@ export async function buildSystemPrompt(options: BuildSystemPromptOptions = {}):
 		hasDynamicXdevTools: xdevTools.some(mounted => mounted.dynamic === true),
 		xdevDocs,
 		autoQaEnabled,
+		leanPrompt,
 		writeTransportOnly,
 	};
 	const selectedTemplate = resolvedCustomPrompt

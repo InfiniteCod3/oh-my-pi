@@ -177,11 +177,11 @@ function resolveSegments(segments: readonly string[]): { path: string; leaf?: An
 	return { path, leaf, members };
 }
 
-function treeComment(setting: AnySetting, value: unknown): string {
+function treeComment(settings: Settings, setting: AnySetting, value: unknown): string {
 	const parts: string[] = [];
 	const choices = setting.enumValues;
 	if (choices) parts.push(choices.join("|"));
-	const fallback = setting.default;
+	const fallback = setting.defaultIn(settings);
 	if (!Bun.deepEquals(value, fallback)) parts.push(`default ${formatValue(setting, fallback)}`);
 	const description = setting.ui?.description;
 	if (description) {
@@ -213,9 +213,9 @@ function renderTree(
 			opened.push(segments[depth]!);
 		}
 		const value = setting.get(settings);
-		if (!Bun.deepEquals(value, setting.default)) modified++;
+		if (!Bun.deepEquals(value, setting.defaultIn(settings))) modified++;
 		const indent = "  ".repeat(segments.length - 1);
-		lines.push(`${indent}${segments.at(-1)}: ${formatValue(setting, value)}${treeComment(setting, value)}`);
+		lines.push(`${indent}${segments.at(-1)}: ${formatValue(setting, value)}${treeComment(settings, setting, value)}`);
 	}
 	return { text: lines.join("\n"), modified };
 }
@@ -225,7 +225,7 @@ function renderLeaf(settings: Settings, setting: AnySetting): string {
 	const lines = [
 		`${setting.id}: ${formatValue(setting, value)}`,
 		`type: ${setting.type}`,
-		`default: ${formatValue(setting, setting.default)}`,
+		`default: ${formatValue(setting, setting.defaultIn(settings))}`,
 		`source: ${PROVENANCE_LABELS[setting.provenance(settings)]}`,
 	];
 	const choices = setting.enumValues;
@@ -338,7 +338,7 @@ export class CfgProtocolHandler implements ProtocolHandler {
 		let modified = 0;
 		if (leaf) {
 			sections.push(renderLeaf(settings, leaf));
-			if (!Bun.deepEquals(leaf.get(settings), leaf.default)) modified++;
+			if (!Bun.deepEquals(leaf.get(settings), leaf.defaultIn(settings))) modified++;
 		}
 		if (members.length > 0) {
 			const tree = renderTree(settings, members, path);

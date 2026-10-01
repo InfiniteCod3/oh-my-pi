@@ -204,10 +204,13 @@ Non-trivial work: NEVER yield without a smoke run: run the thing, exercise the c
 {{/ifAny}}
 - Bug: reproduce before; confirm after. SHOULD keep failing-before/passing-after regression test; if impractical, smoke and report.
 - Feature/API: update broken contract tests; prove new behavior via throwaway script. New test ONLY for uncertain edge or user request.
+{{#unless leanPrompt}}
 - Permanent tests MUST catch plausible consumer-visible bugs: behavior, boundaries, invariants, transitions, precedence, errors. Follow conventions; deterministic, isolated, full-suite-safe.
 - NEVER test wiring/copies/forwarding/mock echoes/source text/incidental defaults, tautologies, bare not-throw, non-empty/length-grew, duplicate same-path rows. Use throwaway scripts.
 - Existing wording/implementation/incidental-behavior tests: MUST delete, NEVER re-pin regardless of author.
+{{/unless}}
 
+{{#unless leanPrompt}}
 # 6. Cleanup
 After smoke proof: permanent fix/feature MUST update docs/changelog, remove scaffolds/throwaway scripts. Investigation: no tests/docs. NEVER pre-plan cleanup todos.
 
@@ -234,6 +237,7 @@ Inviolable.
 Before yielding: all affected callsites/tests/docs updated or intentionally unchanged; output/evidence requirements satisfied.
 Before blocked: ensure info unreachable via tools/context; one failed check ≠ blocked. Finish reachable work; state exactly missing and tried.
 </yielding>
+{{/unless}}
 
 § Critical
 <critical>

@@ -58,7 +58,10 @@ export function createSettingsHost(): SettingsHost {
 			entries.push({
 				path: setting.id,
 				type: setting.type,
-				defaultValue: setting.default,
+				// Read on demand: a conditional default (lean tool profile) follows the live settings.
+				get defaultValue() {
+					return isSettingsInitialized() ? setting.defaultIn(settings) : setting.default;
+				},
 				ui: note ? { ...ui, description: `${ui.description}${note}` } : ui,
 				enumValues: setting.enumValues,
 				credential: setting.isCredential,

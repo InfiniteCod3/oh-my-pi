@@ -23,6 +23,11 @@ import { generateCodeModeDeclarations } from "@oh-my-pi/pi-tui/tools/eval-format
 import { cfgEvalJs } from "@oh-my-pi/pi-coding-agent/eval/settings";
 import { cfgProvidersOpenaiCodexCodeMode } from "@oh-my-pi/pi-coding-agent/session/settings";
 
+/** Code Mode dispatches through the JS eval backend, which the lean tool profile leaves off. */
+function codeModeSettings(overrides: Readonly<Record<string, unknown>> = {}): Settings {
+	return Settings.isolated({ "eval.js": true, ...overrides });
+}
+
 const ENABLED = [
 	"eval",
 	"ask",
@@ -340,7 +345,7 @@ describe("Code Mode session reconciliation", () => {
 	test("prompt rebuilds receive the direct keep-set for the tool inventory", async () => {
 		const directCalls: Array<readonly string[] | undefined> = [];
 		const { session, directModel } = createSession(
-			Settings.isolated({ "providers.openai-codex.codeMode": "auto" }),
+			codeModeSettings({ "providers.openai-codex.codeMode": "auto" }),
 			async (names, _tools, options) => {
 				directCalls.push(options?.directToolNames);
 				return { systemPrompt: [`tools:${names.join(",")}`] };
@@ -355,7 +360,7 @@ describe("Code Mode session reconciliation", () => {
 
 	test("model switches reapply the full enabled set across Code Mode boundaries", async () => {
 		const { session, directModel, codeModel } = createSession(
-			Settings.isolated({ "providers.openai-codex.codeMode": "auto" }),
+			codeModeSettings({ "providers.openai-codex.codeMode": "auto" }),
 		);
 		await session.setActiveToolsByName(["eval", "read"]);
 		expect(session.agent.state.tools.map(value => value.name)).toEqual(["eval"]);
@@ -369,7 +374,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("a caller slate without eval keeps Code Mode inactive", async () => {
-		const { session } = createSession(Settings.isolated({ "providers.openai-codex.codeMode": "auto" }));
+		const { session } = createSession(codeModeSettings({ "providers.openai-codex.codeMode": "auto" }));
 
 		await session.setActiveToolsByName(["read"]);
 
@@ -379,7 +384,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("retains the startup tools array when reconciliation keeps the exact roster", async () => {
-		const { session } = createSession(Settings.isolated({ "providers.openai-codex.codeMode": "off" }));
+		const { session } = createSession(codeModeSettings({ "providers.openai-codex.codeMode": "off" }));
 		const startupTools = session.agent.state.tools;
 
 		await session.setActiveToolsByName(["eval", "read"]);
@@ -388,7 +393,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("startup reconcile survives a transiently narrow live tool set", async () => {
-		const { session } = createSession(Settings.isolated({ "providers.openai-codex.codeMode": "auto" }));
+		const { session } = createSession(codeModeSettings({ "providers.openai-codex.codeMode": "auto" }));
 		// Before the first apply, a startup-time mutation can shrink the live
 		// agent tools. A reconcile landing in that window must reapply the
 		// construction slate, not commit the shrunken set as sticky.
@@ -401,7 +406,7 @@ describe("Code Mode session reconciliation", () => {
 
 	test("an eval replacement that cannot state transport support keeps the direct surface", async () => {
 		const { session } = createSession(
-			Settings.isolated({ "providers.openai-codex.codeMode": "auto" }),
+			codeModeSettings({ "providers.openai-codex.codeMode": "auto" }),
 			undefined,
 			undefined,
 			[],
@@ -422,7 +427,7 @@ describe("Code Mode session reconciliation", () => {
 			},
 		};
 		const { session, codeModel } = createSession(
-			Settings.isolated({
+			codeModeSettings({
 				"providers.openai-codex.codeMode": "auto",
 				"providers.openai-codex.codeModeDirectTools": ["edit"],
 			}),
@@ -442,7 +447,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("runtime setting changes immediately reconcile the Code Mode surface", async () => {
-		const settings = Settings.isolated();
+		const settings = codeModeSettings();
 		cfgProvidersOpenaiCodexCodeMode.set(settings, "auto");
 		const { session } = createSession(settings);
 		await session.setActiveToolsByName(["eval", "read"]);
@@ -476,7 +481,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("Vibe teardown preserves bridge-enabled Code Mode tools", async () => {
-		const { session } = createSession(Settings.isolated({ "providers.openai-codex.codeMode": "auto" }));
+		const { session } = createSession(codeModeSettings({ "providers.openai-codex.codeMode": "auto" }));
 		await session.setActiveToolsByName(["eval", "read"]);
 
 		await session.removeVibeToolsPreservingActive();
@@ -486,7 +491,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("bridge-enabled task retains eager delegation", async () => {
-		const settings = Settings.isolated({
+		const settings = codeModeSettings({
 			"providers.openai-codex.codeMode": "auto",
 			"task.eager": "always",
 			"todo.enabled": false,
@@ -504,7 +509,7 @@ describe("Code Mode session reconciliation", () => {
 
 	test("bridge-enabled task retains orchestration notices", async () => {
 		const { session } = createSession(
-			Settings.isolated({ "providers.openai-codex.codeMode": "auto" }),
+			codeModeSettings({ "providers.openai-codex.codeMode": "auto" }),
 			undefined,
 			undefined,
 			[tool("task")],
@@ -524,7 +529,7 @@ describe("Code Mode session reconciliation", () => {
 	test("prompt refresh preserves the full Code Mode tool predicate", async () => {
 		const predicateUpdates: string[][] = [];
 		const { session } = createSession(
-			Settings.isolated({ "providers.openai-codex.codeMode": "auto" }),
+			codeModeSettings({ "providers.openai-codex.codeMode": "auto" }),
 			undefined,
 			names => predicateUpdates.push([...names]),
 		);
@@ -537,7 +542,7 @@ describe("Code Mode session reconciliation", () => {
 	});
 
 	test("failed tool application leaves Code Mode namespace metadata unchanged", async () => {
-		const { session } = createSession(Settings.isolated({ "providers.openai-codex.codeMode": "auto" }), async () => {
+		const { session } = createSession(codeModeSettings({ "providers.openai-codex.codeMode": "auto" }), async () => {
 			throw new Error("rebuild failed");
 		});
 
@@ -550,7 +555,7 @@ describe("Code Mode session reconciliation", () => {
 	test("plan guidance keeps task delegation after Code Mode demotes the tool", async () => {
 		async function planPrompt(codeMode: "on" | "off", extraTools: AgentTool[], names: string[]): Promise<string> {
 			const { session } = createSession(
-				Settings.isolated({ "providers.openai-codex.codeMode": codeMode }),
+				codeModeSettings({ "providers.openai-codex.codeMode": codeMode }),
 				undefined,
 				undefined,
 				extraTools,
@@ -610,7 +615,7 @@ describe("Code Mode session startup", () => {
 			agentDir: registryDir,
 			modelRegistry,
 			sessionManager: SessionManager.inMemory(),
-			settings: Settings.isolated({ "providers.openai-codex.codeMode": "auto" }),
+			settings: codeModeSettings({ "providers.openai-codex.codeMode": "auto" }),
 			model: codeModel,
 			disableExtensionDiscovery: true,
 			skills: [],
@@ -642,7 +647,7 @@ describe("Code Mode session startup", () => {
 			agentDir: registryDir,
 			modelRegistry,
 			sessionManager: SessionManager.inMemory(),
-			settings: Settings.isolated({ "providers.openai-codex.codeMode": "off" }),
+			settings: codeModeSettings({ "providers.openai-codex.codeMode": "off" }),
 			model: buildModel({
 				id: "gpt-5.6-sol",
 				name: "GPT-5.6 Sol",

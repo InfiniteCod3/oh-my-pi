@@ -3,12 +3,14 @@
  * settings-panel order; `config/all-settings.ts` registers every domain.
  */
 import { register } from "../config/registry";
+import { leanDefault } from "../tools/profile-settings";
 
 // Eval (per-backend toggles; add more as new backends ship, e.g. eval.ts)
 export const cfgEvalPy = register({
 	id: "eval.py",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	env: "PI_PY",
 	ui: {
 		tab: "shell",
@@ -22,6 +24,7 @@ export const cfgEvalJs = register({
 	id: "eval.js",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	env: "PI_JS",
 	ui: {
 		tab: "shell",

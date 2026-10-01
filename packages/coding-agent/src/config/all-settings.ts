@@ -18,6 +18,7 @@ import * as hindsightSettings from "../hindsight/settings";
 import * as exportTtsrSettings from "../export/ttsr-settings";
 import * as editSettings from "../edit/settings";
 import * as toolsSettings from "../tools/settings";
+import * as toolProfileSettings from "../tools/profile-settings";
 import * as lspSettings from "../lsp/settings";
 import * as execSettings from "../exec/settings";
 import * as evalSettings from "../eval/settings";
@@ -82,6 +83,7 @@ const DOMAINS: readonly Readonly<Record<string, unknown>>[] = [
 const PLACED_DOMAINS: readonly { domain: Readonly<Record<string, unknown>>; before: AnySetting }[] = [
 	{ domain: liveSettings, before: sessionSettings.cfgProvidersFetch },
 	{ domain: ttsSettings, before: sessionSettings.cfgProvidersFetch },
+	{ domain: toolProfileSettings, before: toolsSettings.cfgTodoEnabled },
 ];
 
 let ordered: readonly AnySetting[] | undefined;

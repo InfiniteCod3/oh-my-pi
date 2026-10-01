@@ -92,6 +92,8 @@ describe("experimental context management", () => {
 			"compaction.keepRecentTokens": 128,
 			"compaction.midTurnEnabled": false,
 			"providers.openai-codex.codeMode": "on",
+			// Code Mode dispatches through the JS eval backend, which the lean profile leaves off.
+			"eval.js": true,
 		});
 		const toolSession: ToolSession = {
 			cwd: process.cwd(),

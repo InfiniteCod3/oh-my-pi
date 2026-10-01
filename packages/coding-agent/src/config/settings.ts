@@ -967,7 +967,7 @@ export class Settings {
 	 * override/clear ends it.
 	 */
 	pinDefaultValue(setting: AnySetting): void {
-		const value = setting.default;
+		const value = setting.defaultIn(this);
 		if (value === undefined || this.isConfigured(setting)) return;
 		this.writeValue(setting, value, "override");
 		this.#softPins.add(setting);

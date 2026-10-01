@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- The agent now starts with the lean tool profile: eval (Python/JS), LSP (tool and diagnostics after writes), debug, AST edit, semantic find, and Auto QA are off unless you configure them, and the system prompt drops its testing-philosophy, cleanup, and delivery-contract rules. Set `tools.profile: full` to restore the previous defaults.
+
+### Added
+
+- Added the `tools.profile` setting (`lean`/`full`, also `PI_TOOLS_PROFILE`) to switch between a minimal tool surface — core file/shell tools, todo, ask, web search, subagents and agent messaging — and every default-on built-in tool.
+
 ## [18.4.6] - 2026-10-01
 
 ### Added

@@ -3,12 +3,14 @@
  * settings-panel order; `config/all-settings.ts` registers every domain.
  */
 import { register } from "../config/registry";
+import { leanDefault } from "../tools/profile-settings";
 
 // LSP
 export const cfgLspEnabled = register({
 	id: "lsp.enabled",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	ui: {
 		tab: "files",
 		group: "LSP",
@@ -59,6 +61,7 @@ export const cfgLspDiagnosticsOnWrite = register({
 	id: "lsp.diagnosticsOnWrite",
 	type: "boolean",
 	default: true,
+	defaultWhen: leanDefault(false),
 	ui: {
 		tab: "files",
 		group: "LSP",
