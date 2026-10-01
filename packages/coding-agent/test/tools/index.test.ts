@@ -10,13 +10,14 @@ function createTestSession(overrides: Partial<ToolSession> = {}): ToolSession {
 		hasUI: false,
 		getSessionFile: () => null,
 		getSessionSpawns: () => "*",
-		settings: Settings.isolated(),
+		settings: Settings.isolated({ "tools.profile": "full" }),
 		...overrides,
 	};
 }
 
 function createSettingsWithOverrides(overrides: Record<string, unknown> = {}): Settings {
 	return Settings.isolated({
+		"tools.profile": "full",
 		"lsp.formatOnWrite": true,
 		"bashInterceptor.enabled": true,
 		...overrides,

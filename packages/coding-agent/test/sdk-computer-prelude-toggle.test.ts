@@ -40,7 +40,7 @@ describe("AgentSession eval preludes", () => {
 	});
 
 	it("updates enabled preludes without registering browser or computer tools", async () => {
-		const settings = Settings.isolated({ "browser.enabled": false });
+		const settings = Settings.isolated({ "tools.profile": "full", "browser.enabled": false });
 		const { session } = await createAgentSession({
 			cwd: registryDir,
 			agentDir: registryDir,
@@ -94,7 +94,7 @@ describe("AgentSession eval preludes", () => {
 	// `/computer on` mid-session used to rebuild the system prompt and eval
 	// description, busting the provider prompt cache on the next request.
 	it("announces mid-session toggles in a hidden notice without rewriting the cached prefix", async () => {
-		const settings = Settings.isolated({ "browser.enabled": false });
+		const settings = Settings.isolated({ "tools.profile": "full", "browser.enabled": false });
 		const { session } = await createAgentSession({
 			cwd: registryDir,
 			agentDir: registryDir,
@@ -162,6 +162,7 @@ describe("AgentSession eval preludes", () => {
 
 	it("exposes enabled host preludes to user-initiated Python cells", async () => {
 		const settings = Settings.isolated({
+			"tools.profile": "full",
 			"browser.enabled": false,
 			"computer.enabled": true,
 		});
@@ -195,7 +196,7 @@ describe("AgentSession eval preludes", () => {
 			exaApiKeys: [],
 		}));
 		const reconcile = vi.spyOn(manager, "reconcileBrowserFilter");
-		const settings = Settings.isolated({ "browser.enabled": false });
+		const settings = Settings.isolated({ "tools.profile": "full", "browser.enabled": false });
 		const { session } = await createAgentSession({
 			cwd: registryDir,
 			agentDir: registryDir,
@@ -235,6 +236,7 @@ describe("AgentSession eval preludes", () => {
 
 	it("does not add host preludes to a restricted eval-only session", async () => {
 		const settings = Settings.isolated({
+			"tools.profile": "full",
 			"browser.enabled": true,
 			"computer.enabled": true,
 		});

@@ -14,6 +14,11 @@ const CWD = "/tmp/eval-startup-warning";
 let savedPiPy: string | undefined;
 let savedPiJs: string | undefined;
 
+/** The Python warning only applies where eval is on by default: the full tool profile. */
+function fullSettings(overrides: Readonly<Record<string, unknown>> = {}): Settings {
+	return Settings.isolated({ "tools.profile": "full", ...overrides });
+}
+
 function restoreEnv(name: "PI_PY" | "PI_JS", value: string | undefined): void {
 	if (value === undefined) delete Bun.env[name];
 	else Bun.env[name] = value;
@@ -39,14 +44,14 @@ afterEach(() => {
 describe("resolvePythonEvalWarning", () => {
 	it("falls back to JavaScript when Python is missing and JS eval is on", async () => {
 		mockProbe();
-		expect(await resolvePythonEvalWarning({ cwd: CWD, settings: Settings.isolated() })).toBe(
+		expect(await resolvePythonEvalWarning({ cwd: CWD, settings: fullSettings() })).toBe(
 			`Python eval unavailable (Python executable not found on PATH); eval will run JavaScript only. ${FIX_HINT}`,
 		);
 	});
 
 	it("reports no eval backend when Python is missing and JS eval is off", async () => {
 		mockProbe();
-		expect(await resolvePythonEvalWarning({ cwd: CWD, settings: Settings.isolated({ "eval.js": false }) })).toBe(
+		expect(await resolvePythonEvalWarning({ cwd: CWD, settings: fullSettings({ "eval.js": false }) })).toBe(
 			`Eval tool unavailable: Python executable not found on PATH, and JavaScript eval is disabled. ${FIX_HINT}`,
 		);
 	});
@@ -56,7 +61,7 @@ describe("resolvePythonEvalWarning", () => {
 		expect(
 			await resolvePythonEvalWarning({
 				cwd: CWD,
-				settings: Settings.isolated({ "eval.py": false, "eval.js": false }),
+				settings: fullSettings({ "eval.py": false, "eval.js": false }),
 			}),
 		).toBeUndefined();
 		expect(probe).not.toHaveBeenCalled();
@@ -65,7 +70,7 @@ describe("resolvePythonEvalWarning", () => {
 	it("shortens home paths, strips control characters, and bounds the probe reason", async () => {
 		const interpreter = path.join(os.homedir(), "py\tenv", "python");
 		mockProbe(`Tried: ${interpreter} \x1b[31mspawn failed\x1b[0m ${"x".repeat(400)}`);
-		const warning = await resolvePythonEvalWarning({ cwd: CWD, settings: Settings.isolated() });
+		const warning = await resolvePythonEvalWarning({ cwd: CWD, settings: fullSettings() });
 		const reason = warning?.slice(warning.indexOf("(") + 1, warning.indexOf(")"));
 		expect(reason).toStartWith("Tried: ~/py");
 		expect(reason).not.toContain(os.homedir());
@@ -76,7 +81,7 @@ describe("resolvePythonEvalWarning", () => {
 });
 
 describe("resolveFirstLaunchPythonEvalWarning", () => {
-	const base = { cwd: CWD, settings: Settings.isolated() };
+	const base = { cwd: CWD, settings: fullSettings() };
 
 	it("probes on a fresh install and stays silent once the changelog marker exists", async () => {
 		const probe = mockProbe();
